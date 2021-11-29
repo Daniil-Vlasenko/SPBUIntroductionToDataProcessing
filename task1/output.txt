@@ -1,6 +1,22 @@
 Average amount of dependents for people don't own their home:
 1.113636
+Average age in each income groups:
+"average";36.9038452307692
+"high";41.849998
+"low";35.9404761904762
 Top 5 youngest people, whose application was declined: 
 "card";"reports";"age";"income";"share";"expenditure";"owner";"selfemp";"dependents";"days";"majorcards";"active";"incomePerFamilyMember";"incomeLevel"
-"1207";"no";0;20.58333;1.2;0.001;0;"no";"yes";1;730;1;0;0.6;"card";"reports";"age";"income";"share";"expenditure";"owner";"selfemp";"dependents";"days";"majorcards";"active";"incomePerFamilyMember";"incomeLevel"
-"1207";"no";0;20.58333;1.2;0.001;0;"no";"yes";1;730;1;0;0.6;
+"1207";"no";0;20.58333;1.2;0.001;0;"no";"yes";1;730;1;0;0.6;"low"
+"1143";"no";1;20.91667;2.625;0.0004571429;0;"no";"yes";0;610;1;2;2.625;"average"
+"27";"no";0;21.66667;3.84;0.0003125;0;"no";"yes";1;365;0;1;1.92;"average"
+"248";"no";0;23.08333;2.6;0.0004615385;0;"no";"yes";0;1126;1;7;2.6;"average"
+"841";"no";0;23.58333;2.425;0.0004948454;0;"no";"yes";2;4017;1;1;0.808333333333333;"low"
+Top 5 eldest people, whose application was declined: 
+"card";"reports";"age";"income";"share";"expenditure";"owner";"selfemp";"dependents";"days";"majorcards";"active";"incomePerFamilyMember";"incomeLevel"
+"1184";"no";2;48.25;6.8;0.0001764706;0;"yes";"yes";1;1706;0;20;3.4;"average"
+"554";"no";2;53;2.16;0.0005555556;0;"no";"yes";0;2252;0;5;2.16;"low"
+"1240";"no";0;53;11;0.0001090909;0;"yes";"yes";0;13058;1;0;11;"high"
+"132";"no";0;53.33333;4.9;0.000244898;0;"yes";"yes";0;3287;0;1;4.9;"average"
+"1119";"no";4;57.75;2;6e-04;0;"yes";"yes";0;1095;0;44;2;"low"
+Average number of major CCs held for people with top 10 income: 
+8.56758

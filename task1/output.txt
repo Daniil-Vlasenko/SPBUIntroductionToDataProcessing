@@ -19,4 +19,4 @@ Top 5 eldest people, whose application was declined:
 "132";"no";0;53.33333;4.9;0.000244898;0;"yes";"yes";0;108;0;1;3287;4.9;"average"
 "1119";"no";4;57.75;2;6e-04;0;"yes";"yes";0;36;0;44;1095;2;"low"
 Average number of major CCs held for people with top 10 income: 
-0.7
+1

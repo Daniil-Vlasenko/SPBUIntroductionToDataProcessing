@@ -4,14 +4,16 @@ library("dplyr")
 a <- 1/10
 distribution <- c("uniform" = punif, "exponential" = pexp, "normal" = pnorm)
 rand <- c("uniform" = runif, "exponential" = rexp, "normal" = rnorm)
+
 stRenyiCriterion <- function(x, a, distribution, ...) {
-  f <- ecdf(x)
-  df <- data.frame(edf = environment(f)$y, distribution = distribution(environment(f)$x, ...)) %>% filter(edf > a)
+  df <- data.frame(edf = sapply(x, FUN = function(y, x) {sum(x < y) / length(x)}, x), 
+                   distribution = distribution(x, ...)) %>% filter(edf > a)
   (abs(df$edf - df$distribution) / df$edf) %>% max() * sqrt(length(x))
 }
 stRenyiCriterionPlus <- function(x, a, distribution, ...) {
   f <- ecdf(x)
-  df <- data.frame(edf = environment(f)$y, distribution = distribution(environment(f)$x, ...)) %>% filter(edf > a)
+  df <- data.frame(edf = sapply(x, FUN = function(y, x) {sum(x < y) / length(x)}, x), 
+                   distribution = distribution(x, ...)) %>% filter(edf > a)
   ((df$edf - df$distribution) / df$edf) %>% max() * sqrt(length(x))
 }
 # 1.
@@ -30,13 +32,13 @@ legend(4.5, 0.8, legend=c("n = 10", "n = 50", "n = 100", "n = 500", "n = 1000"),
 dev.off()
 # 2.
 pdf(file="2.pdf")
-plot(density(replicate(500, stRenyiCriterion(rand$uniform(5000), a, distribution$uniform))), 
+plot(density(replicate(500, stRenyiCriterion(rand$uniform(1000), a, distribution$uniform))), 
      xlim = c(0, 10), ylim = c(0, 0.5), 
      main = TeX("The asymptotic distribution of $R_n$ does not depend on the distribution function $F(x)$"), col = "black", 
      xlab = "statistics of the Renyi criterion")
-lines(density(replicate(500, stRenyiCriterion(rand$exponential(5000), a, distribution$exponential))), 
+lines(density(replicate(500, stRenyiCriterion(rand$exponential(1000), a, distribution$exponential))), 
       col = "brown")
-lines(density(replicate(500, stRenyiCriterion(rand$normal(5000), a, distribution$normal))), 
+lines(density(replicate(500, stRenyiCriterion(rand$normal(1000), a, distribution$normal))), 
       col = "chartreuse4")
 legend(7.5, 0.5, legend=c("uniform", "exponential", "normal"),
        col=c("black", "brown", "chartreuse4"), 
@@ -48,12 +50,12 @@ par(lwd = 2)
 x <- seq(0, 3.5, length = 300)
 plot(x, pnorm(x) * 2 - 1, type = "l", xlim = c(0, 3.5), ylab = "y",
      main = TeX('Demonstration of the equation $\\lim_{n->inf}(P(\\sqrt{a / (1 - a)}R_{n}^{+} < x)) = 2\\Phi(x) - 1$'))
-f <- ecdf(replicate(300, sqrt(a/(1-a)) * stRenyiCriterionPlus(rand$uniform(10), a, distribution$uniform)))
-lines(environment(f)$x, environment(f)$y, col = "brown")
-f <- ecdf(replicate(300, sqrt(a/(1-a)) * stRenyiCriterionPlus(rand$uniform(100), a, distribution$uniform)))
-lines(environment(f)$x, environment(f)$y, col = "chartreuse4")
-f <- ecdf(replicate(300, sqrt(a/(1-a)) * stRenyiCriterionPlus(rand$uniform(1000), a, distribution$uniform)))
-lines(environment(f)$x, environment(f)$y, col = "darkgoldenrod3")
+x <- replicate(300, sqrt(a/(1-a)) * stRenyiCriterionPlus(rand$uniform(10), a, distribution$uniform)) %>% sort()
+lines(x, sapply(x, FUN = function(y, x) {sum(x < y) / length(x)}, x), col = "brown")
+x <- replicate(300, sqrt(a/(1-a)) * stRenyiCriterionPlus(rand$uniform(100), a, distribution$uniform)) %>% sort()
+lines(x, sapply(x, FUN = function(y, x) {sum(x < y) / length(x)}, x), col = "chartreuse4")
+x <- replicate(300, sqrt(a/(1-a)) * stRenyiCriterionPlus(rand$uniform(1000), a, distribution$uniform)) %>% sort()
+lines(x, sapply(x, FUN = function(y, x) {sum(x < y) / length(x)}, x), col = "darkgoldenrod3")
 legend(2.5, 0.2, legend=c("n = 10", "n = 100", "n = 1000"),
        col=c("brown", "chartreuse4", "darkgoldenrod3"), 
        lty=1, bg = "whitesmoke")

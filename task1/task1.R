@@ -3,20 +3,19 @@ library("dplyr")
 
 # 1.
 # Create a dateframe of self-employed.
-df <- read.table("study_fall2021_intror_creditcard.txt", header=TRUE, sep=";") %>% filter(selfemp == "yes")
 # Convert amount of months applicant living at his/her current address to days.
-today <- as.Date("2000-01-01")
-df <- mutate(df, days = as.numeric(today - (today %m-% months(df$months))))
+# Define criterion of income level, and split data according to levels of this criterion.
 # Add column with income per family member.
 # Due to the lack of information about a person's family, 
 # we assume that dependents are family members without the applicant.
-df <- mutate(df, incomePerFamilyMember = income / (dependents + 1))
-# Define criterion of income level, and split data according to levels of this criterion.
-df <- mutate(df, incomeLevel = case_when(
-  df$income < 2.5 ~ "low",
-  df$income >= 2.5 & df$income <= 8 ~ "average",
-  df$income >8 ~ "high"
-))
+today <- as.Date("2000-01-01")
+df <- read.table("study_fall2021_intror_creditcard.txt", header=TRUE, sep=";") %>% filter(selfemp == "yes") %>%
+  mutate(days = as.numeric(today - (today %m-% months(months))), incomeLevel = case_when(
+    income < 2.5 ~ "low",
+    income <= 8 ~ "average",
+    TRUE ~ "high"
+  ), incomePerFamilyMember = income / (dependents + 1))
+
 # 2.
 # Print some information about dataset.
 file.create("output.txt", showWarnings = TRUE)
@@ -41,3 +40,4 @@ write("Average number of major CCs held for people with top 10 income: ",
 write((arrange(df, income) %>% tail(10))$majorcards %>% mean(), 
       file = "output.txt", append=TRUE)
 close(output)
+

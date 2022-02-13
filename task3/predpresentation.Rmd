@@ -1,0 +1,228 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Давайте взглянем на датасет.
+```{r}
+library(dplyr)
+library(lattice)
+
+df <- read.table("data.txt", header=TRUE, sep=" ", na.strings = c("NA", " ")) %>% mutate(yrs = factor(yrs))
+head(df)
+```
+Датасет собирался для исследования влияния размеров класса на успеваемость учеников, поэтому ориентироваться будем в большей степени на корреляции результатов тестов по чтению и математики с остальными данными. Гипотеза - меньший размер класса ведет к улучшению успеваемости учеников не зависимо от пола или этнической принадлежности  учеников, типа школы, наличия социальных льгот,
+
+Посмотрим на корреляцию результатов тестов и опыта преподователя.
+```{r}
+df.tmp <- df %>% group_by(exp, yrs) %>% 
+        summarise(math = mean(math, na.rm=TRUE), read = mean(read, na.rm=TRUE))
+barchart(math~exp|yrs, data = df.tmp, 
+        layout=c(1, 4), horiz=FALSE,  scales = list(x = list(at = c(5, 10, 15, 20, 25, 30, 35, 40))),
+        xlab="Teacher experience", ylab="Results in math")
+
+barchart(read~exp|yrs, data = df.tmp,
+         layout=c(1, 4), horiz=FALSE, scales = list(x = list(at = c(5, 10, 15, 20, 25, 30, 35, 40))),
+         xlab="Teacher experience", ylab="Results in reading")
+```
+Корреляции не наблюдается.
+
+Посмотрим на корреляцию резульаттов тестов и научной степени преподавателя.
+```{r}
+df.tmp <- df %>% group_by(hdeg, yrs) %>% 
+      summarise(math = mean(math, na.rm=TRUE), read = mean(read, na.rm=TRUE))
+xyplot(math~read|yrs, data = df.tmp, 
+      group=hdeg, layout=c(4, 1), pch=19, cex=2,
+      auto.key=list(space="top", columns=3),
+      xlab="Results in reading", ylab="Results in math")
+xyplot(math~read|yrs, data = df.tmp, 
+      group=hdeg, layout=c(4, 1), pch=19, cex=2, scales="free",
+      auto.key=list(space="top", columns=3),
+      xlab="Results in reading", ylab="Results in math")
+
+```
+Заметим, что специалисты по образованию и доктора наук лучше справляются с преподаванием, чем бакалавры или магистры.
+
+
+
+Посмотрим на корреляцию результатов тыстов и дольжности преподавателя в школе.
+```{r}
+df.tmp <- df %>% group_by(clad, yrs) %>% 
+      summarise(math = mean(math, na.rm=TRUE), read = mean(read, na.rm=TRUE))
+xyplot(math~read|yrs, data = df.tmp , 
+      group=clad, layout=c(4, 1), pch=19,
+      auto.key=list(space="top", columns=4),
+      xlab="Results in reading", ylab="Results in math")
+xyplot(math~read|yrs, data = df.tmp , 
+      group=clad, layout=c(4, 1), pch=19, scales="free",
+      auto.key=list(space="top", columns=4),
+      xlab="Results in reading", ylab="Results in math")
+```
+Корреляции нет.
+
+Сделаем выборку из эффективных учителей, чтобы сделать исследование более точным.
+```{r}
+df.new <- df %>% filter(exp >= 1) %>% group_by(sch, yrs) %>% 
+          mutate(med.read = median(read, na.rm=TRUE), med.math = median(math, na.rm=TRUE)) %>%
+          ungroup()
+df.count.all <- df.new  %>% group_by(tch) %>% summarise(n = n())  %>% filter(n >= 10)
+df.count.best <- df.new %>% filter(read > med.read | math > med.math) %>% group_by(tch) %>% 
+          summarise(n = n())
+df.tch <- inner_join(df.count.best, df.count.all, by = "tch") %>% mutate(pref = n.x / n.y) %>%
+          filter(pref > 0.5)
+df.new <- inner_join(df.new, df.tch, by = "tch")
+
+df.new
+```
+
+Посмотрим за зависисмости уcпеваемости от различных параметров в датасете.
+```{r}
+df.tmp <- df %>% group_by(yrs, schtype, cltype) %>% 
+        summarise(math = mean(math, na.rm=TRUE), read = mean(read, na.rm=TRUE))
+df.new.tmp <- df.new %>% group_by(yrs, schtype, cltype) %>% 
+        summarise(math = mean(math, na.rm=TRUE), read = mean(read, na.rm=TRUE))
+
+barchart(math~schtype|yrs, data = df.tmp,
+        horiz=FALSE, group=cltype, scales = "free",
+        auto.key=list(space="top", columns=3, text=c("regular", "regular + aide", "small")),
+        xlab="School type", ylab="Results in math")
+barchart(math~schtype|yrs, data = df.new.tmp,
+        horiz=FALSE, group=cltype, scales = "free",
+        auto.key=list(space="top", columns=3, text=c("regular", "regular + aide", "small")),
+        xlab="School type", ylab="Results in math")
+barchart(read~schtype|yrs, data = df.tmp,
+        horiz=FALSE, group=cltype, scales = "free",
+        auto.key=list(space="top", columns=3, text=c("regular", "regular + aide", "small")),
+        xlab="School type", ylab="Results in reading")
+barchart(read~schtype|yrs, data = df.new.tmp,
+        horiz=FALSE, group=cltype, scales = "free",
+        auto.key=list(space="top", columns=3, text=c("regular", "regular + aide", "small")),
+        xlab="School type", ylab="Results in reading")
+```
+```{r}
+df.tmp <- df %>% group_by(yrs, ses, cltype) %>% 
+        summarise(math = mean(math, na.rm=TRUE), read = mean(read, na.rm=TRUE))
+df.new.tmp <- df.new %>% group_by(yrs, ses, cltype) %>% 
+        summarise(math = mean(math, na.rm=TRUE), read = mean(read, na.rm=TRUE))
+
+barchart(math~ses|yrs, data = df.tmp,
+        horiz=FALSE, group=cltype, scales = "free",
+        auto.key=list(space="top", columns=3, text=c("regular", "regular + aide", "small")),
+        xlab="Socioeconomic status", ylab="Results in math")
+barchart(math~ses|yrs, data = df.new.tmp, 
+        horiz=FALSE, group=cltype, scales = "free",
+        auto.key=list(space="top", columns=3, text=c("regular", "regular + aide", "small")),
+        xlab="Socioeconomic status", ylab="Results in math")
+barchart(read~ses|yrs, data = df.tmp,
+        horiz=FALSE, group=cltype, scales = "free",
+        auto.key=list(space="top", columns=3, text=c("regular", "regular + aide", "small")),
+        xlab="Socioeconomic status", ylab="Results in reading")
+barchart(read~ses|yrs, data = df.new.tmp,
+        horiz=FALSE, group=cltype, scales = "free",
+        auto.key=list(space="top", columns=3, text=c("regular", "regular + aide", "small")),
+        xlab="Socioeconomic status", ylab="Results in reading")
+```
+```{r}
+df.tmp <- df %>% group_by(yrs, sx, cltype) %>% 
+        summarise(math = mean(math, na.rm=TRUE), read = mean(read, na.rm=TRUE))
+df.new.tmp <- df.new %>% group_by(yrs, sx, cltype) %>% 
+        summarise(math = mean(math, na.rm=TRUE), read = mean(read, na.rm=TRUE))
+
+barchart(math~sx|yrs, data = df.tmp,
+        horiz=FALSE, group=cltype, scales = "free",
+        auto.key=list(space="top", columns=3, text=c("regular", "regular + aide", "small")),
+        xlab="Student's sex", ylab="Results in math")
+barchart(math~sx|yrs, data = df.new.tmp,
+        horiz=FALSE, group=cltype, scales = "free",
+        auto.key=list(space="top", columns=3, text=c("regular", "regular + aide", "small")),
+        xlab="Student's sex", ylab="Results in math")
+barchart(read~sx|yrs, data = df.tmp,
+        horiz=FALSE, group=cltype, scales = "free",
+        auto.key=list(space="top", columns=3, text=c("regular", "regular + aide", "small")),
+        xlab="Student's sex", ylab="Results in reading")
+barchart(read~sx|yrs, data = df.new.tmp,
+        horiz=FALSE, group=cltype, scales = "free",
+        auto.key=list(space="top", columns=3, text=c("regular", "regular + aide", "small")),
+        xlab="Student's sex", ylab="Results in reading")
+```
+Маленький датасет для сравнения по рассам. Поэтому сравним только белых и черных.
+
+```{r}
+df %>% group_by(eth) %>% summarise(n())
+df.new %>% group_by(eth) %>% summarise(n())
+```
+
+
+```{r}
+df.tmp <- df %>% filter(eth == "B" | eth == "W") %>% group_by(yrs, eth, cltype) %>% 
+        summarise(math = mean(math, na.rm=TRUE), read = mean(read, na.rm=TRUE))
+df.tmp.new <- df.new %>% filter(eth == "B" | eth == "W") %>% group_by(yrs, eth, cltype) %>% 
+        summarise(math = mean(math, na.rm=TRUE), read = mean(read, na.rm=TRUE))
+
+barchart(math~eth|yrs, data = df.tmp,
+        horiz=FALSE, group=cltype, scales = "free",
+        auto.key=list(space="top", columns=3, text=c("regular", "regular + aide", "small")),
+        xlab="Student's ethnicity", ylab="Results in math")
+barchart(math~eth|yrs, data = df.tmp.new,
+        horiz=FALSE, group=cltype, scales = "free",
+        auto.key=list(space="top", columns=3, text=c("regular", "regular + aide", "small")),
+        xlab="Student's ethnicity", ylab="Results in math")
+barchart(read~eth|yrs, data = df.tmp,
+        horiz=FALSE, group=cltype, scales = "free",
+        auto.key=list(space="top", columns=3, text=c("regular", "regular + aide", "small")),
+        xlab="Student's ethnicity", ylab="Results in reading")
+barchart(read~eth|yrs, data = df.tmp.new,
+        horiz=FALSE, group=cltype, scales = "free",
+        auto.key=list(space="top", columns=3, text=c("regular", "regular + aide", "small")),
+        xlab="Student's ethnicity", ylab="Results in reading")
+```
+
+Для каждого года обучения, независимо от типа школы, социально-экономического статуса, расы или пола учеников, ученики классов меньших размеров успешнее в учебе остальных учеников. Исключение~--- второй год обучения школ в небольших городах. Использование помощника преподавателя в классах обычного размера не влияет на успеваемость учеников.
+
+
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+1.
+```{r}
+df.tmp <- df %>% group_by(exp, yrs) %>% 
+        summarise(math = mean(math, na.rm=TRUE), read = mean(read, na.rm=TRUE))
+barchart(math~exp|yrs, data = df.tmp, 
+        layout=c(2, 2), horiz=FALSE,  scales = list(x = list(at = c(5, 10, 15, 20, 25, 30, 35, 40))),
+        xlab="Teacher experience", ylab="Results in math")
+
+barchart(read~exp|yrs, data = df.tmp,
+         layout=c(2, 2), horiz=FALSE, scales = list(x = list(at = c(5, 10, 15, 20, 25, 30, 35, 40))),
+         xlab="Teacher experience", ylab="Results in reading")
+```
+2.
+```{r}
+densityplot(~math|sx*yrs, data=df)
+```
+
+
+3.
+```{r}
+df.tmp <- df %>% group_by(yrs, eth, cltype) %>% 
+        summarise(math = mean(math, na.rm=TRUE), read = mean(read, na.rm=TRUE))
+df.tmp.new <- df.new %>% group_by(yrs, eth, cltype) %>% 
+        summarise(math = mean(math, na.rm=TRUE), read = mean(read, na.rm=TRUE))
+
+barchart(math~eth|yrs, data = df.tmp,
+        horiz=FALSE, group=cltype, scales = "free",
+        auto.key=list(space="top", columns=3, text=c("regular", "regular + aide", "small")),
+        xlab="Student's ethnicity", ylab="Results in math")
+barchart(math~eth|yrs, data = df.tmp.new,
+        horiz=FALSE, group=cltype, scales = "free",
+        auto.key=list(space="top", columns=3, text=c("regular", "regular + aide", "small")),
+        xlab="Student's ethnicity", ylab="Results in math")
+barchart(read~eth|yrs, data = df.tmp,
+        horiz=FALSE, group=cltype, scales = "free",
+        auto.key=list(space="top", columns=3, text=c("regular", "regular + aide", "small")),
+        xlab="Student's ethnicity", ylab="Results in reading")
+barchart(read~eth|yrs, data = df.tmp.new,
+        horiz=FALSE, group=cltype, scales = "free",
+        auto.key=list(space="top", columns=3, text=c("regular", "regular + aide", "small")),
+        xlab="Student's ethnicity", ylab="Results in reading")
+```
+
+
+
